@@ -69,9 +69,7 @@ export default {
     return {
       allDone: {
         get() {},
-        set() {
-            console.log()
-        },
+        set() {},
       },
       todos: [
         {
