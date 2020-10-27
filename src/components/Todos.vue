@@ -1,7 +1,7 @@
 <template>
   <section class="todoapp">
     <header class="header">
-      <h1>Todo</h1>
+      <h1>To-do List</h1>
       <input
         v-model="newTodo"
         @keyup.enter="addTodo"
@@ -11,22 +11,31 @@
       />
     </header>
     <div class="main">
-      <input v-model="allDone" type="checkbox" class="toggle-all"/>
       <ul class="todo-list">
         <li
           v-for="todo in filteredTodos"
           :key="todo"
-          :class="{ completed: todo.completed }"
+          :class="{ completed: todo.completed, editing: todo === editing }"
           class="todo"
         >
           <div class="view">
             <input v-model="todo.completed" type="checkbox" class="toggle" />
-            <label>{{ todo.name }}</label>
+            <label @dblclick="editTodo(todo)">{{ todo.name }}</label>
+            <button class="destroy" @click.prevent="deleteTodo(todo)"></button>
           </div>
+          <input
+            type="text"
+            class="edit"
+            v-model="todo.name"
+            @keyup.enter="doneEdit"
+            @blur="doneEdit"
+            @keyup.esc="cancelEdit"
+            v-focus="todo === editing"
+          />
         </li>
       </ul>
     </div>
-    <footer class="footer">
+    <footer class="footer" v-show="hasTodos">
       <span class="todo-count"
         ><strong>{{ remaining }}</strong> Tache<span v-if="remaining >= 2"
           >s</span
@@ -59,6 +68,13 @@
           >
         </li>
       </ul>
+      <button
+        class="clear-completed"
+        v-show="completed"
+        @click="deleteCompleted"
+      >
+        Supprimer tâches faites
+      </button>
     </footer>
   </section>
 </template>
@@ -67,21 +83,25 @@
 export default {
   data() {
     return {
-      allDone: {
-        get() {},
-        set() {},
-      },
-      todos: [
-        {
-          name: "Tache de test",
-          completed: false,
-        },
-      ],
+      todos: [],
       newTodo: "",
       filter: "all",
+      editing: null,
+      oldTodo: "",
     };
   },
   methods: {
+    doneEdit() {
+      this.editing = null;
+    },
+    cancelEdit() {
+      this.editing.name = this.oldTodo;
+      this.doneEdit();
+    },
+    editTodo(todo) {
+      this.editing = todo;
+      this.oldTodo = todo.name;
+    },
     addTodo() {
       this.todos.push({
         completed: false,
@@ -89,10 +109,20 @@ export default {
       });
       this.newTodo = "";
     },
+    deleteTodo(todo) {
+      this.todos = this.todos.filter((i) => i !== todo);
+    },
+    deleteCompleted() {
+      this.todos = this.todos.filter((todo) => !todo.completed);
+    },
   },
+
   computed: {
     remaining() {
       return this.todos.filter((todos) => !todos.completed).length;
+    },
+    completed() {
+      return this.todos.filter((todos) => todos.completed).length;
     },
     filteredTodos() {
       if (this.filter === "todo") {
@@ -101,6 +131,16 @@ export default {
         return this.todos.filter((todo) => todo.completed);
       }
       return this.todos;
+    },
+    hasTodos() {
+      return this.todos.length > 0;
+    },
+  },
+  directives: {
+    focus(el, value) {
+      if (value) {
+        el.focus();
+      }
     },
   },
 };
